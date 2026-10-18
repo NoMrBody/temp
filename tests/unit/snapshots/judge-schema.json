@@ -1,0 +1,73 @@
+{
+  "type": "OBJECT",
+  "properties": {
+    "lines": {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "properties": {
+          "tag": {
+            "type": "INTEGER"
+          },
+          "text": {
+            "type": "STRING"
+          },
+          "status": {
+            "type": "STRING",
+            "enum": [
+              "ok",
+              "error",
+              "skip"
+            ]
+          },
+          "plot": {
+            "type": "STRING"
+          }
+        },
+        "required": [
+          "tag",
+          "text",
+          "status"
+        ],
+        "propertyOrdering": [
+          "tag",
+          "text",
+          "status",
+          "plot"
+        ]
+      }
+    },
+    "stage": {
+      "type": "STRING",
+      "enum": [
+        "blank",
+        "scribble",
+        "in_progress",
+        "finished"
+      ]
+    },
+    "is_relevant": {
+      "type": "BOOLEAN"
+    },
+    "issue_is_new": {
+      "type": "BOOLEAN"
+    },
+    "feedback": {
+      "type": "STRING"
+    }
+  },
+  "required": [
+    "lines",
+    "stage",
+    "is_relevant",
+    "issue_is_new",
+    "feedback"
+  ],
+  "propertyOrdering": [
+    "lines",
+    "stage",
+    "is_relevant",
+    "issue_is_new",
+    "feedback"
+  ]
+}

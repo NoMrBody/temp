@@ -1,0 +1,39 @@
+{
+  "type": "OBJECT",
+  "properties": {
+    "read_text": {
+      "type": "STRING"
+    },
+    "correct_step": {
+      "type": "STRING"
+    },
+    "reason": {
+      "type": "STRING"
+    },
+    "verdict": {
+      "type": "STRING",
+      "enum": [
+        "confirmed",
+        "valid",
+        "unclear"
+      ]
+    },
+    "hint": {
+      "type": "STRING"
+    }
+  },
+  "required": [
+    "read_text",
+    "correct_step",
+    "reason",
+    "verdict",
+    "hint"
+  ],
+  "propertyOrdering": [
+    "read_text",
+    "correct_step",
+    "reason",
+    "verdict",
+    "hint"
+  ]
+}
