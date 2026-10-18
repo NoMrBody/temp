@@ -307,7 +307,7 @@ export function createGraph(ctx: Ctx): GraphApi {
   head.addEventListener("pointerup", () => (hd = null), sig);
   head.style.cursor = "move";
   window.addEventListener("resize", schedule, sig);
-  window.addEventListener("mathboard:theme", schedule, sig);
+  window.addEventListener("iterraai:theme", schedule, sig);
 
   return {
     addSeries(expr: string, label: string) {

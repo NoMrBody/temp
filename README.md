@@ -1,87 +1,161 @@
-# Math Board
+# IterraAI
 
-A handwritten-math tutor on a full-screen canvas (Next.js App Router + TypeScript). The student writes with a pen, stylus, finger or mouse; a multi-agent pipeline on the server (Judge → Verifier → Coach, driven by a plain-code Orchestrator) puts a green tick next to every line that checks out, and when a line is wrong it makes that ink glow and says one or two short sentences. Everything else stays silent.
+IterraAI is a handwritten-math tutor on a full-screen canvas. You write with a pen, stylus, finger or mouse. A "big brother" tutor watches your notebook and stays quiet unless it has something useful to say:
 
-The Gemini key lives only in a server-side environment variable. The browser never receives it.
+- a small **green tick** appears next to every line that checks out;
+- when a line is **wrong**, its ink glows for two seconds and the tutor tells you, in one or two short sentences, *where* the mistake is and the idea behind it (never the final answer);
+- you can **open a PDF of problems**, write on its pages, and **chat** with the tutor: ask for a hint on "problem 2b", and if the hint is not enough, ask it to write the solution on the canvas as typeset LaTeX.
 
-## Setup
+Built with Next.js (App Router) and TypeScript. The Gemini API key lives only on the server.
+
+## Contents
+
+[Quick start](#quick-start) · [Using IterraAI](#using-iterraai) · [How it works](#how-it-works) · [Configuration](#configuration) · [Project layout](#project-layout) · [Testing](#testing) · [Deploying to Vercel](#deploying-to-vercel) · [Design decisions](#design-decisions) · [Known limits](#known-limits)
+
+## Quick start
+
+Requirements: Node.js 20 or newer and a [Gemini API key](https://aistudio.google.com/apikey).
 
 ```bash
 npm install
-cp .env.example .env.local        # fill in GEMINI_API_KEY
-npm run dev                       # http://localhost:3000
+echo 'GEMINI_API_KEY=your_key_here' > .env.local
+npm run dev            # http://localhost:3000
 ```
 
-| Variable | Required | Meaning |
-|---|---|---|
-| `GEMINI_API_KEY` | yes | Gemini API key. Server only. Never logged, never sent to the client. |
-| `ACCESS_CODE` | no | If set, `/api/check` requires header `x-access-code`. The UI asks for it in a modal. |
-| `GEMINI_API_BASE` | no | Defaults to `https://generativelanguage.googleapis.com/v1beta` (tests point it at the mock). |
-| `JUDGE_MODELS` | no | Comma-separated model list, overrides the default list (use it to pin stable models). |
-| `VERIFIER_MODELS` | no | Comma-separated override for the Verifier list. |
-| `TTS_MODEL` / `TTS_VOICE` | no | Server-side speech (`POST /api/speak`, default `gemini-2.5-flash-preview-tts`, voice `Charon`). Falls back to the browser voice if it fails. |
+Production build: `npm run build && npm start`. Check `http://localhost:3000/api/health`: it should report `keyConfigured: true`.
 
-`GET /api/health` → `{ ok, keyConfigured, accessRequired }`.
+## Using IterraAI
 
-## Scripts
+### Writing and being checked
 
-`dev`, `build`, `start`, `lint`, `typecheck`, `test` (vitest), `test:e2e` (Playwright, uses the mock Gemini server and needs `npm run build` first), `eval` (offline replay of labeled traces with the real key).
+- **Auto mode (default):** the tutor checks two seconds after you stop writing, or immediately when you start a new line below. A running check is never cancelled by new writing; one follow-up check runs afterwards.
+- **Manual mode:** nothing is checked until you press **Check** (or Enter).
+- **Silence is the default.** The tutor speaks about a mistake once per exact line, only after a second, stronger model has confirmed it. If you leave a confirmed mistake unfixed and keep working, it reminds you later in different words (at most three times, 45 s apart, only after 30 s of idle time in Auto mode). Fixed mistakes clear silently. A correct finished solution gets one short cheer.
+- **Graphs:** a line such as `y = 2x^2` gets a small graph button. The panel supports several curves, zoom, pan, and marks intercepts, roots and extrema.
+- **Voice:** Chrome, Edge and Safari use the browser's own speech. Firefox, Brave and browsers without any voices use a natural voice generated on the server (Gemini text-to-speech), so every browser sounds acceptable. Mute with **M**.
 
-## Deploy (Vercel)
+### Worksheets (PDF)
 
-1. Push the repository (it contains no secrets). 2. Import it in Vercel (Next.js preset, Node 22). 3. Settings → Environment Variables: add `GEMINI_API_KEY` (mark Sensitive), optionally `ACCESS_CODE`, `JUDGE_MODELS`, `VERIFIER_MODELS`, for Production and Preview. 4. Redeploy. 5. Open `/api/health` and confirm `keyConfigured: true`. 6. `maxDuration` is 60 s in `app/api/check/route.ts`; if your plan allows less, lower it and `VERIFIER_TIMEOUT_MS` in `shared/config.ts`.
+- **Open PDF** (bottom bar, or the paperclip in the chat): all pages appear as white sheets floating on the canvas, stacked top to bottom. Limits: 30 pages, 2.6 MB.
+- **Write on them** like on any canvas. Ink is dark on a sheet; your lines are checked as usual.
+- **Move around:** the canvas is unbounded. Wheel or two-finger scroll pans; Ctrl+wheel or a trackpad pinch zooms (25 % – 400 %); on touch screens pinch with two fingers (with a stylus in use, one finger pans); the **Move** tool (**H**), holding **Space**, or the middle mouse button also pan. **0** or the fit button fits the worksheet to the screen.
+- **Move or delete the worksheet:** a handle above its first page shows the file name. Drag ✥ to move the whole worksheet (your writing on it and its ticks go along). × deletes it after a second click; your writing stays.
 
-## Dark and light mode
+### Tutor chat
 
-The sun/moon button in the toolbar switches theme; the choice is stored (`mathboard.theme`) and applied by a tiny inline script before the first paint, so there is no flash. Dark is the default (the spec's dark UI); the operating system's preference is not followed. Colours are CSS variables in `app/globals.css` (`html[data-theme="light"]` overrides). In light mode ink is dark navy (existing ink flips too), tutor notes and the red mistake glow use darker tones, the graph panel has a light palette, and worksheet sheets keep their white paper with a softer shadow. Exports (Judge image, PDF) never depend on the theme.
+Open with the speech-bubble button or **C**.
 
-## Worksheets, chat and pages
+| You say | The tutor does |
+|---|---|
+| "help me with problem 1a" | Reads the whole PDF, your writing and which page you are looking at. Shows a **hint** in a small window in the top-left corner (never the final answer). |
+| "that's not enough, write the solution on the canvas" | Writes the full solution as **typeset LaTeX** next to the worksheet and pans there. |
+| anything else | Answers in the chat. |
 
-- **Open PDF** (📄 in the page bar, or 📎 in the chat): all pages of the PDF are laid out one below the other as white sheets floating on the canvas (rendered with `pdfjs-dist`, 820 world units wide, max 30 pages, 2.6 MB). You write on them with the pen; ink is dark on a sheet and light on the grid. A worksheet belongs to the canvas page it was opened on. A handle above its first page shows the file name: ✥ drags the whole worksheet (the writing on it, and its ticks, move along; tutor notes beside it stay where they are), × deletes it after a second click (the writing stays); the chat chip's ✕ removes it too. Moving is not undoable.
-- **Move around:** the canvas is unbounded. Wheel / two-finger scroll pans, Ctrl+wheel or a trackpad pinch zooms around the cursor, two fingers pinch/pan on touch screens (with a stylus in use, one finger pans), the **Move** tool (H), holding Space or the middle mouse button also pan. The page bar has −/%/+ and ⤢ (also key `0`) to fit the worksheet to the screen. Zoom is 25 %–400 %.
-- **Chat (button or `C`):** `POST /api/chat` sends the whole PDF (as a Gemini attachment), a picture of your writing, which PDF page is in the middle of your screen, and the last chat turns. Ask e.g. "help me with problem 2b" — the tutor finds it anywhere in the PDF. It answers with one of three intents: **hint** (the default; shown in the small window top-left and in the chat; never the final answer), **solution** (only when you explicitly ask; typeset as LaTeX with MathJax and placed on the canvas in green in the free space right of the sheets, level with what you are looking at; the view pans to it) or **answer** (anything else).
-- **Tutor notes** are typeset LaTeX (one line per step; a line MathJax cannot parse is shown as plain text). Each note has handles above it: ✥ drag it anywhere (also while panning/zooming), × remove it. They are not your ink: never sent to the Judge, untouched by the eraser, removed by Clear (not by Undo), and included in the PDF export. MathJax is loaded on first use (`mathjax-full/es5/tex-svg.js`, packages base+ams only).
-- **Pages** (`+`, ‹ ›): each canvas page has its own ink, worksheet, view, undo and tutor memory. **PDF** exports every canvas page: one PDF page per worksheet sheet, holding the sheet, the writing and tutor notes closest to it. That page is made just large enough to contain all of them completely (notes beside the sheet widen it, nothing is cropped or drawn twice). A plain canvas exports as one page.
-- **Judge on tall canvases:** when writing spans so much height that the image sent to the Judge would shrink below 0.8×, empty vertical bands (> 100 px) between lines are squeezed to 60 px, so lines stay as readable as on a small canvas. Small canvases are exported exactly as before. The Judge still sees only your ink (the printed text is not in its image) — the spec's Phase 2 prompt changes were not made.
-- Decisions: the PDF is re-sent with every chat message (stateless server, no Files API; Vercel's ~4.5 MB body limit is why the PDF is capped at 2.6 MB); solutions are plain text with Unicode math, no LaTeX; the chat uses the Verifier model list with its thinking settings and 4096 output tokens; sheets are rendered at 1400 px wide and at most 8 stay in memory; ticks follow panning/zooming (hidden when off screen), the red glow stops when the view moves.
-- Not saved between visits: pages, worksheets, chat history. The model's worked solutions are not verified by anything — check them.
+Solution notes have handles: ✥ drag them anywhere, × remove. They are not your ink: never checked as your work, untouched by the eraser, included in the PDF export. The tutor's solutions are produced by a language model and are not verified: check them.
 
-## Layout
+### Pages, export, themes
 
-`app/` routes and shell · `components/Board.tsx` markup (Appendix D as JSX) · `lib/board/*` browser-only canvas engine, tutor loop, marks, glow, voice, graph, trace · `server/*` Gemini REST client, prompts, agents, orchestrator · `shared/*` config, types, zod schemas, outcome helpers · `tests/unit` vitest · `tests/e2e` Playwright · `tests/mock-gemini` mock server · `evals/run.ts` offline eval runner. `lib/` never imports `server/` and vice versa.
+- **Pages:** `+` adds a canvas page, ‹ › switch between them. Each page keeps its own ink, worksheet, view, undo history and tutor memory.
+- **Export PDF** (bottom bar): one PDF page per worksheet sheet (with your writing and the tutor's notes closest to it, nothing cropped) or one page for a plain canvas. Everything runs in the browser.
+- **Theme:** the sun/moon button switches between dark (default) and light and is remembered.
+- **Trace panel (T):** shows every agent step of every check (Judge, Verifier, Coach, timings, the image sent), lets you label results (✓ right, ✗ false alarm, ✗ missed) and export them as `iterraai-trace.json` for the offline evaluator.
 
-## Tests
+### Shortcuts
 
-- `npm test` — 79 unit tests: expression parser table, segmentation (the 1917×793 four-line layout, erased strokes, fractions), orchestrator invariants, Gemini client (thinking-config retry, cooldowns, dead models, timeouts vs aborts, hedging, fatal errors), zod schemas, rate limit, and byte-for-byte snapshot tests of the Judge/Verifier prompts and schemas against Appendix B.
-- `npm run test:e2e` — Playwright against `next start` with the mock Gemini server (random port, written to `tests/e2e/.mock-port-<mode>` by `tests/e2e/launch.mjs`). It starts four servers: main, no key, `ACCESS_CODE=letmein`, and `next dev` (for the StrictMode double-mount check). Screenshots of scenarios 1, 5 and 6 land in `test-results/screenshots/`.
+| Key | Action | Key | Action |
+|---|---|---|---|
+| **P** / **E** / **H** | pen / eraser / move | **M** | mute or unmute voice |
+| **T** | trace panel | **C** | tutor chat |
+| **0** | fit worksheet | **Space** (hold) | pan with the mouse |
+| **Ctrl/Cmd+Z** | undo | **Enter** | Check (Manual mode) |
+| **Ctrl/Cmd+Enter** | check now (any mode) | **Esc** | dismiss caption and glow |
 
-## Decisions
+Tablets and styluses are supported: palm rejection (large touches, touches near the pen, touches after the pen has been used), the stylus eraser button, and a canvas that follows rotation and Safari's address bar.
 
-Decisions taken without asking, as the spec requires:
+## How it works
 
-- **`EXCLUDE_RE`** and the **voice-preference regexes** were referenced but not given. I wrote `/embed|aqa|tts|image|vision|audio|live|robotics|computer-use|imagen|veo|gemma|learnlm|native|thinking-exp|-exp-/i` and Edge "Natural" male names, then `Aaron|Alex|Evan|Nathan|Tom|Fred`, then `David|Mark`.
-- **Helpers not in Appendix E** (`drawFullStroke`, incremental drawing, `boxesOverlap`, `growBox`, `rrect`, …) were written to match the described behavior (quadratic midpoints, min widths 1.6/4, eraser as `destination-out`).
-- **Appendix E.1/E.4** contain two garbled comment openers; they were ignored (code is unaffected).
-- **Reminders (Section 10):** a 1 s client clock re-checks in Auto mode when an open issue is due and the pen has been idle ≥ 30 s. To avoid hammering the server if the Coach fails, each attempt also stamps `lastAttemptAt`, which is used together with `lastSpokenAt` for the 45 s spacing. Only one reminder is spoken per check, and never while the voice is busy or when a new mistake was announced.
-- **Fatal errors** (no key, bad Google key, 401) set `tutor.fatal`, which stops further automatic checks until reload (or until the access code is saved).
-- **Persona switch** is built but only rendered when `PERSONA_LABELS` has more than one entry (today: one). `PERSONA_LABELS` lives in `shared/config.ts` because the persona *text* must stay server-side.
-- **Test hooks in production code:** `data-*` attributes (`#board[data-strokes]`, `#glow[data-glow-count]`, `#trace[data-last]`, `.tick[data-tag]`) so Playwright can assert observable outcomes. The reminder e2e shifts `Date.now()` from an init script instead of waiting 30–45 s.
-- **`allowedDevOrigins: ["127.0.0.1"]`** in `next.config.ts` only affects `next dev`.
-- Unit tests use `@napi-rs/canvas` (dev dependency) so the real ink-visibility replay runs in Node.
-- The graph panel's Reset test checks that Reset changes the zoomed view rather than pixel equality with the first render (hover state made the latter flaky).
+```
+ Browser (React shell + imperative canvas engine)               Server (Next.js route handlers, Node runtime)
+ ┌───────────────────────────────────────────────┐              ┌──────────────────────────────────────────┐
+ │ strokes → lines (L1, L2, …) → tagged PNG      │  CheckRequest│ POST /api/check  (NDJSON stream)          │
+ │ ticks, glow, caption, voice, graph, trace     │ ────────────▶│  Orchestrator (plain code)                │
+ │ worksheet sheets, pan/zoom, notes, pages, PDF │ ◀────────────│   ├─ Judge     fast model, every line  │
+ │ owns ALL session state                        │  NDJSON      │   ├─ Verifier  stronger, flagged lines │
+ └───────────────────────────────────────────────┘  events      │   └─ Coach     rewords reminders       │
+        │  POST /api/chat   (hint / solution / answer)          │ POST /api/chat   tutor chat + PDF         │
+        └──────────────────────────────────────────────────────▶│ POST /api/speak  server-side speech       │
+                                                                │ GET  /api/health                          │
+                                                                └──────────────────────────────────────────┘
+```
 
-## Open questions
+- **The server is stateless.** Every request carries what it needs; the browser keeps all session state. This makes the orchestrator a pure function of the request and removes sticky-session problems on serverless hosting.
+- **Judge → Verifier:** the Judge reads the whole canvas image and returns a verdict for every line. Only lines it flags (and that are new or never announced) go to the Verifier, at most two per check. A mistake is spoken only if the Verifier confirms it (fail-open if the Verifier is unreachable). The Verifier can only confirm, veto or reword; it can never create an accusation.
+- **Gemini access** is plain REST with model fallback, a hedged second request after 8 s, per-model cooldowns, thinking-config handling per model family, and fatal-error detection for key problems.
+- **Canvas engine:** native Canvas 2D and Pointer Events, no drawing library. A world/screen transform supports pan and zoom; PDF pages are rendered with `pdfjs-dist`, LaTeX with MathJax (loaded on first use), PDFs are written by a small built-in generator.
 
-- Thinking-config names for 3.x models (`thinkingLevel: "minimal" | "low"`) and the `-latest` aliases are exactly as in the prototype but unverified against today's API; the 400-"thinking" retry covers rejection.
-- The rate limit and model-health state (`cooldown`, `dead`) are per serverless instance; on Vercel they reset on cold starts.
-- Verifier crops are skipped when the client has no crop for a flagged line (fail-open means the Judge's hint is spoken unverified, as specified).
-- Phase 2 is only partly built: worksheets on the canvas and pan/zoom exist, but the Judge/Verifier prompts were not changed for printed content (see above). `evals/run.ts` exists but has not been run (it needs real labeled traces and a key).
-- `maxDuration = 60` may exceed hobby-plan limits.
+## Configuration
 
-## Manual QA on the real model (author)
+Set in `.env.local` (local) or the host's environment (Vercel). Only the first is required.
 
-Write correct lines; a deliberate sign error; two mistakes at once; a fixed mistake; a doodle; a star; `y=2x²` then `y'=4x+2`; two equations side by side. Label each check in the trace panel, then **Export JSON** and feed the file to `npm run eval`.
+| Variable | Meaning |
+|---|---|
+| `GEMINI_API_KEY` | **Required.** Gemini API key. Server only: never logged, never sent to the browser. |
+| `ACCESS_CODE` | Optional shared code. If set, every API call must carry it (the UI asks once). Recommended for public deployments. |
+| `JUDGE_MODELS` | Optional comma-separated model list that replaces the default Judge list (pin stable models here). |
+| `VERIFIER_MODELS` | Optional list for the Verifier and the chat. |
+| `TTS_MODEL`, `TTS_VOICE` | Optional server-side speech model and voice (defaults `gemini-2.5-flash-preview-tts`, `Charon`). |
+| `GEMINI_API_BASE` | Optional API base URL (the tests point it at a mock server). |
 
-## Honest limits
+Tunable behaviour (pause length, thresholds, timeouts, retry budget…) lives in `shared/config.ts`.
 
-Verified with the mock Gemini server only: pipeline plumbing, orchestration rules, the canvas engine, UI behavior, error paths. **Not verified:** the accuracy of the real Judge/Verifier on real handwriting, real speech-synthesis voices, iPad/Apple Pencil, and Vercel deployment. Prompts, schemas and thresholds are the prototype's, unchanged.
+## Project layout
+
+```
+app/            routes: page, /api/check, /api/chat, /api/speak, /api/health, global CSS (themes)
+components/     Board.tsx — the markup (a single client component that mounts the engine)
+lib/board/      browser-only engine: canvas, ink analysis, export, tutor loop, marks, glow, voice,
+                graph/, sheets (PDF pages), view (pan/zoom), pages, chat, notes + LaTeX, trace, PDF writer
+server/         Gemini client, models, prompts, agents (judge, verifier, coach, chat), orchestrator
+shared/         config, types, zod schemas, outcome helpers (used by both sides)
+tests/          unit/ (vitest), e2e/ (Playwright), mock-gemini/ (a stand-in Gemini server)
+evals/run.ts    offline replay of labeled traces against the real model
+```
+
+`lib/` never imports from `server/` and the other way round; both may import `shared/`.
+
+## Testing
+
+```bash
+npm test               # unit tests (vitest)
+npm run typecheck && npm run lint
+npm run build          # required before the e2e tests
+npm run test:e2e       # Playwright against `next start` + the mock Gemini server
+```
+
+- **Unit tests** cover the expression parser, ink segmentation, the orchestrator's rules, the Gemini client (retries, cooldowns, hedging, timeouts), request validation, prompt/schema snapshots, chat parsing, view math and the PDF writer.
+- **End-to-end tests** run in Chromium with a mock Gemini server on a random port (no key needed): verifier outcomes, Auto and Manual modes, reminders, graphs, invalidation, pages and export, worksheets and gestures, chat, LaTeX notes and moving them, themes, access code, a missing key, and React StrictMode (against `next dev`). Screenshots land in `test-results/screenshots/`.
+- `npm run eval -- iterraai-trace.json [--max-false 0.05]` replays labeled traces with the **real** key and reports the false-accusation and missed-mistake rates, Verifier precision and latencies.
+
+## Deploying to Vercel
+
+1. Push the repository (it contains no secrets). 2. Import it in Vercel (Next.js preset, Node 22). 3. Add `GEMINI_API_KEY` (mark it Sensitive) and, for a public site, `ACCESS_CODE`, for Production and Preview. 4. Redeploy and open `/api/health`. 5. The API routes declare `maxDuration` 60 s (`/api/chat` too); lower it, and `VERIFIER_TIMEOUT_MS` in `shared/config.ts`, if your plan allows less.
+
+Vercel limits request bodies to about 4.5 MB, which is why PDFs are capped at 2.6 MB.
+
+## Design decisions
+
+- **Prompts, schemas and thresholds are unchanged from the tested prototype** (and snapshot-tested against it). New agents may only confirm, veto or reword.
+- **Worksheet context:** the PDF is re-sent with every chat message (stateless server, no file upload API). The automatic checker still sees only your handwriting, not the printed text; the prompt changes needed for that are intentionally not made without a labeled evaluation on worksheet pages. When writing is spread over a very tall canvas, empty vertical bands between lines are squeezed in the checker's image so lines stay readable; ordinary canvases are sent exactly as before.
+- **Speech:** browser speech where it is good, server-generated speech where it is not, with the browser voice as the fallback.
+- **Tutor solutions** are plain LaTeX lines (MathJax with the base and AMS packages only); a line that cannot be typeset is shown as plain text.
+- **No accounts, no database, English only.** Nothing is saved between visits: pages, worksheets and chat history live in the browser tab. Settings (mode, pen size, voice, theme, access code) are kept in `localStorage` under `iterraai.*`; settings saved under the former name (`mathboard.*`) are still read.
+- **The project was renamed from "Math Board" to IterraAI;** only the repository folder may still be called `mathboard`.
+
+## Known limits
+
+- Accuracy on real handwriting has **not** been measured: the test suite runs against a mock Gemini server. Use the trace panel and `npm run eval` to measure it.
+- Not verified: real speech voices on every browser, iPad Safari with Apple Pencil, and a live Vercel deployment.
+- Rate limiting and model-health tracking are per server instance and best effort.
+- Moving a worksheet or a note, and deleting either, cannot be undone.
+- Sheets are rendered at a fixed resolution, so they soften above roughly 300 % zoom.
+- Thinking-config names for newer Gemini models and the `-latest` aliases follow the prototype and may need pinning through `JUDGE_MODELS`.

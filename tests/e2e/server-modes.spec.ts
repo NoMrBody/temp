@@ -45,7 +45,7 @@ test("8c. the right access code works end to end", async ({ page, request }) => 
   expect(bad.status()).toBe(401);
   await resetMock("access");
   await scenario({ judge: { lines: [{ tag: 1, text: "x", status: "ok" }], stage: "in_progress", feedback: "" } }, "access");
-  await openBoard(page, { base: base(PORTS.access), manual: true, storage: { "mathboard.accessCode": "letmein" } });
+  await openBoard(page, { base: base(PORTS.access), manual: true, storage: { "iterraai.accessCode": "letmein" } });
   await expect(page.locator("#accessModal")).not.toHaveClass(/open/);
   await drawLine(page, 200);
   await page.locator("#checkBtn").click();

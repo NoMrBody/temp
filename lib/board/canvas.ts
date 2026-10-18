@@ -28,7 +28,7 @@ export function createCanvas(ctx: Ctx): CanvasApi {
     ctx.marks.reposition();
     ctx.notesUi.sync();
   }
-  window.addEventListener("mathboard:theme", () => { ctx.glow.stop(); redrawAll(); ctx.sheets.draw(); }, sig);
+  window.addEventListener("iterraai:theme", () => { ctx.glow.stop(); redrawAll(); ctx.sheets.draw(); }, sig);
   window.visualViewport?.addEventListener("resize", () => resize(), sig);
   window.addEventListener("orientationchange", () => setTimeout(resize, 150), sig);
 
@@ -183,7 +183,7 @@ export function createCanvas(ctx: Ctx): CanvasApi {
     (e) => {
       if (e.pointerType === "pen") {
         state.penSeen = true;
-        store.set("mathboard.penSeen", "1");
+        store.set("iterraai.penSeen", "1");
       }
       // --- touch: palms are ignored, two fingers pinch/pan, one finger draws (or pans when a pen/hand tool is in use)
       if (e.pointerType === "touch") {

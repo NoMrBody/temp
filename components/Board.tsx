@@ -119,6 +119,7 @@ export default function Board() {
       </div>
 
       <div className="hint" id="hint">
+        <div className="brand">IterraAI</div>
         <h1 id="hintTitle">Write your math. Your buddy is watching.</h1>
         <p id="hintText">A green tick means a line checks out. If something&apos;s off, he&apos;ll light it up and tell you. Press M to mute.</p>
       </div>

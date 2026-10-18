@@ -240,10 +240,10 @@ export function createPages(ctx: Ctx): PagesApi {
     const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "mathboard.pdf";
+    a.download = "iterraai.pdf";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    ctx.tutorApi.setStatus("idle", `Exported ${rendered.length} page${rendered.length > 1 ? "s" : ""} to mathboard.pdf`);
+    ctx.tutorApi.setStatus("idle", `Exported ${rendered.length} page${rendered.length > 1 ? "s" : ""} to iterraai.pdf`);
   }
 
   ctx.$("pagePrev").addEventListener("click", () => goTo(cur - 1), sig);

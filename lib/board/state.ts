@@ -4,7 +4,8 @@ import type { BoardState, TutorState, Timers } from "./types";
 export const store = {
   get(k: string): string | null {
     try {
-      return localStorage.getItem(k);
+      // settings saved under the project's former name ("mathboard.*") are still honoured
+      return localStorage.getItem(k) ?? localStorage.getItem(k.replace(/^iterraai\./, "mathboard."));
     } catch {
       return null;
     }
@@ -19,7 +20,7 @@ export const store = {
 };
 
 export function createState(): BoardState {
-  const w = parseFloat(store.get("mathboard.pen") ?? "");
+  const w = parseFloat(store.get("iterraai.pen") ?? "");
   return {
     strokes: [],
     notes: [],
@@ -27,7 +28,7 @@ export function createState(): BoardState {
     current: null,
     activePointer: null,
     tool: "pen",
-    penSeen: store.get("mathboard.penSeen") === "1",
+    penSeen: store.get("iterraai.penSeen") === "1",
     strokeSeq: 0,
     checkedIds: new Set(),
     lineMemory: new Map(),
@@ -52,11 +53,11 @@ export function createTutor(): TutorState {
     lastStrokeEnd: 0,
     captionSeq: 0,
     lastFeedback: "",
-    mode: store.get("mathboard.mode") === "manual" ? "manual" : "auto",
+    mode: store.get("iterraai.mode") === "manual" ? "manual" : "auto",
     persona: "friendly",
     openIssues: new Map(),
     accessRequired: false,
-    accessCode: store.get("mathboard.accessCode") ?? "",
+    accessCode: store.get("iterraai.accessCode") ?? "",
     fatal: false,
   };
 }

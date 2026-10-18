@@ -31,11 +31,11 @@ test("dark is the default; the toggle switches to light, is remembered and appli
   expect(await theme(page)).toBe("light");
   const light = await bg(page);
   expect(light).not.toBe(dark);
-  expect(await page.evaluate(() => localStorage.getItem("mathboard.theme"))).toBe("light");
+  expect(await page.evaluate(() => localStorage.getItem("iterraai.theme"))).toBe("light");
   await expect(page.locator("#themeBtn")).toHaveAttribute("title", "Switch to dark mode");
   await page.screenshot({ path: "test-results/screenshots/theme-light.png" });
   // reload: the stored theme is set by the inline script before React runs
-  await page.addInitScript(() => localStorage.setItem("mathboard.theme", "light")); // survives the harness's own init script
+  await page.addInitScript(() => localStorage.setItem("iterraai.theme", "light")); // survives the harness's own init script
   await page.reload();
   expect(await theme(page)).toBe("light");
   expect(await bg(page)).toBe(light);
@@ -72,7 +72,7 @@ test("light mode: panels, chat, graph and tutor notes are themed", async ({ page
     chat: { intent: "solution", message: "ok", solution_lines: ["x^2 - 4x = 0", "x(x-4)=0"] },
     judge: { lines: [{ tag: 1, text: "y = x^2", status: "ok", plot: "x^2" }], stage: "in_progress", feedback: "" },
   });
-  await openBoard(page, { manual: true, storage: { "mathboard.theme": "light" } });
+  await openBoard(page, { manual: true, storage: { "iterraai.theme": "light" } });
   expect(await theme(page)).toBe("light");
   await page.locator("#chatFile").setInputFiles(pdf);
   await expect(page.locator("#sheets")).toHaveAttribute("data-sheets", "1");

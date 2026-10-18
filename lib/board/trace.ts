@@ -109,7 +109,7 @@ export function createTrace(ctx: Ctx): TraceApi {
     () => {
       const data = {
         exportedAt: new Date().toISOString(),
-        note: "Math Board trace. Replay with `npm run eval -- <file>`.",
+        note: "IterraAI trace. Replay with `npm run eval -- <file>`.",
         checks: records.map((r) => ({
           id: r.id,
           time: new Date(r.time).toISOString(),
@@ -132,7 +132,7 @@ export function createTrace(ctx: Ctx): TraceApi {
       const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" }));
       const a = document.createElement("a");
       a.href = url;
-      a.download = "mathboard-trace.json";
+      a.download = "iterraai-trace.json";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     },

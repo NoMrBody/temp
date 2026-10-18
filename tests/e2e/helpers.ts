@@ -37,7 +37,7 @@ export async function count(kind: Call["kind"], mode: Mode = "main"): Promise<nu
 
 /** Fresh page with voice muted (caption appears immediately) and optional extra localStorage values. */
 export async function openBoard(page: Page, opts: { manual?: boolean; storage?: Record<string, string>; base?: string; voice?: boolean } = {}) {
-  const storage: Record<string, string> = { "mathboard.voice": opts.voice ? "on" : "off", ...(opts.manual ? { "mathboard.mode": "manual" } : { "mathboard.mode": "auto" }), ...opts.storage };
+  const storage: Record<string, string> = { "iterraai.voice": opts.voice ? "on" : "off", ...(opts.manual ? { "iterraai.mode": "manual" } : { "iterraai.mode": "auto" }), ...opts.storage };
   await page.addInitScript((s) => {
     for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
     const real = Date.now;

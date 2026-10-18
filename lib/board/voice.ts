@@ -33,7 +33,7 @@ function silentWavUrl(): string {
 export function createVoice(ctx: Ctx): VoiceApi {
   const supported = typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
   const v = {
-    enabled: store.get("mathboard.voice") !== "off",
+    enabled: store.get("iterraai.voice") !== "off",
     chosen: null as SpeechSynthesisVoice | null,
     unlocked: false,
     seq: 0,
@@ -265,7 +265,7 @@ export function createVoice(ctx: Ctx): VoiceApi {
     hideCard,
     toggle() {
       v.enabled = !v.enabled;
-      store.set("mathboard.voice", v.enabled ? "on" : "off");
+      store.set("iterraai.voice", v.enabled ? "on" : "off");
       if (!v.enabled) stop();
       updateVoiceButton();
     },

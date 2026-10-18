@@ -108,18 +108,18 @@ export function mountBoard(root: HTMLElement): () => void {
     "input",
     () => {
       state.penWidth = parseFloat(penSize.value) || CLIENT_CONFIG.PEN_WIDTH;
-      store.set("mathboard.pen", String(state.penWidth));
+      store.set("iterraai.pen", String(state.penWidth));
       showSize();
     },
     sig,
   );
   function setTheme(t: "dark" | "light") {
     document.documentElement.dataset.theme = t;
-    store.set("mathboard.theme", t);
+    store.set("iterraai.theme", t);
     $("themeSun").style.display = t === "dark" ? "" : "none";
     $("themeMoon").style.display = t === "dark" ? "none" : "";
     $("themeBtn").title = t === "dark" ? "Switch to light mode" : "Switch to dark mode";
-    window.dispatchEvent(new Event("mathboard:theme"));
+    window.dispatchEvent(new Event("iterraai:theme"));
   }
   on("themeBtn", () => setTheme(ctx.theme() === "dark" ? "light" : "dark"));
   setTheme(ctx.theme());
@@ -145,7 +145,7 @@ export function mountBoard(root: HTMLElement): () => void {
   const accessInput = $("accessInput") as HTMLInputElement;
   function saveAccess() {
     tutor.accessCode = accessInput.value.trim();
-    store.set("mathboard.accessCode", tutor.accessCode);
+    store.set("iterraai.accessCode", tutor.accessCode);
     tutor.fatal = false;
     accessModal.classList.remove("open");
     ctx.tutorApi.setStatus("idle");
@@ -208,7 +208,7 @@ export function mountBoard(root: HTMLElement): () => void {
   const personas = Object.keys(PERSONA_LABELS) as Persona[];
   let personaEl: HTMLElement | null = null;
   if (personas.length > 1) {
-    const saved = store.get("mathboard.persona") as Persona | null;
+    const saved = store.get("iterraai.persona") as Persona | null;
     if (saved && personas.includes(saved)) tutor.persona = saved;
     personaEl = document.createElement("div");
     personaEl.className = "toolbar persona";
@@ -223,7 +223,7 @@ export function mountBoard(root: HTMLElement): () => void {
         "click",
         () => {
           tutor.persona = p;
-          store.set("mathboard.persona", p);
+          store.set("iterraai.persona", p);
           for (const x of Array.from(seg.children)) x.classList.toggle("active", x === b);
         },
         sig,

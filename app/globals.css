@@ -359,3 +359,5 @@ body.hand #board:active{cursor:grabbing}
 .sheet-ctl.dragging .grip{cursor:grabbing}
 .sheet-ctl .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
 .sheet-ctl .del:hover,.sheet-ctl .del.armed{color:#fff;background:var(--bad);border-color:var(--bad)}
+
+.hint .brand{font:600 13px Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);opacity:.9;margin-bottom:10px}

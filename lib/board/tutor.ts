@@ -92,7 +92,7 @@ export function createTutorApi(ctx: Ctx): TutorApi {
 
   function setMode(m: "auto" | "manual") {
     tutor.mode = m;
-    store.set("mathboard.mode", m);
+    store.set("iterraai.mode", m);
     ctx.$("modeAuto").classList.toggle("active", m === "auto");
     ctx.$("modeManual").classList.toggle("active", m === "manual");
     (ctx.$("checkBtn") as HTMLElement).hidden = m === "auto";

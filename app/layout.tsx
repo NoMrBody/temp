@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Math Board",
-  description: "A handwritten-math tutor on a full-screen canvas.",
+  title: "IterraAI",
+  description: "IterraAI — a handwritten-math tutor on a full-screen canvas.",
 };
 
 export const viewport: Viewport = {
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("mathboard.theme");document.documentElement.dataset.theme=t==="light"?"light":"dark"}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("iterraai.theme")||localStorage.getItem("mathboard.theme");document.documentElement.dataset.theme=t==="light"?"light":"dark"}catch(e){}`,
           }}
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

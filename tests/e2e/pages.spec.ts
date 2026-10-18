@@ -89,7 +89,7 @@ test("export PDF downloads every page that has writing", async ({ page }) => {
   await page.locator("#pagePrev").click();
   await drawLine(page, 300);
   const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#exportPdf").click()]);
-  expect(download.suggestedFilename()).toBe("mathboard.pdf");
+  expect(download.suggestedFilename()).toBe("iterraai.pdf");
   const path = await download.path();
   const bytes = readFileSync(path!);
   const text = bytes.toString("latin1");

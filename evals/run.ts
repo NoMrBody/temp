@@ -1,4 +1,4 @@
-/* Offline eval runner: replays labeled `mathboard-trace.json` checks through the orchestrator with the REAL key.
+/* Offline eval runner: replays labeled `iterraai-trace.json` checks through the orchestrator with the REAL key.
  *   npm run eval -- trace1.json [trace2.json ...] [--max-false 0.05]
  * Needs GEMINI_API_KEY in the environment. Not run by `npm test`. */
 import { readFileSync } from "node:fs";
