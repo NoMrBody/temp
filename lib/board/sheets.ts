@@ -82,6 +82,7 @@ export function createSheets(ctx: Ctx): SheetsApi {
     g.clearRect(0, 0, c.width, c.height);
     const w = ws();
     c.dataset.sheets = String(w ? w.sheets.length : 0);
+    ctx.sheetUi.sync();
     if (!w) return;
     g.setTransform(ctx.dpr, 0, 0, ctx.dpr, 0, 0);
     let rendered = 0;
@@ -171,8 +172,9 @@ export function createSheets(ctx: Ctx): SheetsApi {
   function bounds(): Box | null {
     const w = ws();
     if (!w || !w.sheets.length) return null;
-    const last = w.sheets[w.sheets.length - 1];
-    return { x0: 0, y0: w.sheets[0].y, x1: SHEET_W, y1: last.y + last.h };
+    const first = w.sheets[0],
+      last = w.sheets[w.sheets.length - 1];
+    return { x0: first.x, y0: first.y, x1: first.x + first.w, y1: last.y + last.h };
   }
 
   return { load, clear, draw, contains, focusIndex, bounds, renderBitmap };

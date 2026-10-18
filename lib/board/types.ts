@@ -172,6 +172,10 @@ export interface CanvasApi {
   syncCursor(): void;
 }
 
+export interface SheetUiApi {
+  sync(): void;
+}
+
 export interface NotesUiApi {
   sync(): void;
 }
@@ -269,6 +273,7 @@ export interface Ctx {
   canvas: CanvasApi;
   chat: ChatApi;
   notesUi: NotesUiApi;
+  sheetUi: SheetUiApi;
   sheets: SheetsApi;
   viewApi: ViewApi;
   view: View;

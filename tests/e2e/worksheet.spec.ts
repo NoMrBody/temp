@@ -384,3 +384,83 @@ test("PDF export: the sheet keeps its page, the solution beside it is complete (
   expect(maxX).toBeLessThan(img.width - 2); // nor at the right
   expect(img.width / img.height).toBeGreaterThan(0.8); // the page is wider than the sheet alone (3:4 = 0.75) because the note sits beside it
 });
+
+test("the worksheet can be dragged by its handle; the writing on it and its ticks go along", async ({ page }) => {
+  await scenario({ judge: { lines: [{ tag: 1, text: "a", status: "ok" }], stage: "in_progress", feedback: "" } });
+  await openWorksheet(page);
+  await page.locator("#chatClose").click();
+  await expect(page.locator(".sheet-ctl")).toBeVisible();
+  await expect(page.locator(".sheet-ctl .name")).toHaveText(".worksheet.pdf");
+  await drawLine(page, 300, 120);
+  await page.locator("#checkBtn").click();
+  await expect(ticks(page)).toHaveCount(1);
+  const tickTop = () => ticks(page).first().evaluate((el) => parseFloat((el as HTMLElement).style.top));
+  const tickLeft = () => ticks(page).first().evaluate((el) => parseFloat((el as HTMLElement).style.left));
+  const [t0x, t0y] = [await tickLeft(), await tickTop()];
+  const v0 = await view(page);
+  const inkRect = (dx: number, dy: number): [number, number, number, number] => [110 + dx, 295 + dy, 260, 55];
+  expect(await px(page, "#board", inkRect(0, 0), "dark")).toBeGreaterThan(40);
+  const grip = page.locator(".sheet-ctl .grip");
+  const g0 = (await grip.boundingBox())!;
+  await page.mouse.move(g0.x + 13, g0.y + 13);
+  await page.mouse.down();
+  await page.mouse.move(g0.x + 13 + 120, g0.y + 13 + 60, { steps: 8 });
+  await page.mouse.up();
+  await expect.poll(() => px(page, "#board", inkRect(120, 60), "dark")).toBeGreaterThan(40); // the ink moved with the sheet
+  expect(await px(page, "#board", inkRect(0, 0), "dark")).toBe(0);
+  expect(await tickLeft()).toBeCloseTo(t0x + 120, 0);
+  expect(await tickTop()).toBeCloseTo(t0y + 60, 0);
+  expect((await view(page)).tx).toBe(v0.tx); // the view itself did not move
+  const g1 = (await grip.boundingBox())!;
+  expect(g1.x).toBeCloseTo(g0.x + 120, 0);
+  expect(g1.y).toBeCloseTo(g0.y + 60, 0);
+  await page.screenshot({ path: "test-results/screenshots/worksheet-moved.png" });
+  // the sheet's paper really is where the handle says (white pixels just right/below of the old top-left corner)
+  expect(await px(page, "#sheets", [v0.tx + 130, v0.ty + 70, 40, 40])).toBeGreaterThan(1000);
+  expect(await px(page, "#sheets", [v0.tx + 2, v0.ty - 20, 100, 20])).toBe(0); // nothing is left behind above the new top edge
+  // ticks still belong to their line: a new check does not treat the moved ink as new
+  const reqs = captureChecks(page);
+  await page.locator("#checkBtn").click();
+  await expect(page.locator("#statusText")).toHaveText("Nothing new to check");
+  expect(reqs).toHaveLength(0);
+});
+
+test("deleting the worksheet needs a second click; the writing stays; the PDF can be opened again", async ({ page }) => {
+  await openWorksheet(page);
+  await page.locator("#chatClose").click();
+  await page.mouse.move(300, 300);
+  await page.mouse.down();
+  await page.mouse.move(340, 340, { steps: 3 });
+  await page.mouse.up();
+  const del = page.locator(".sheet-ctl .del");
+  await del.click();
+  await expect(del).toHaveText("Delete?");
+  await expect(page.locator("#sheets")).toHaveAttribute("data-sheets", "3"); // not yet
+  await page.waitForTimeout(3300); // it disarms itself
+  await expect(del).toHaveText("×");
+  await expect(page.locator("#sheets")).toHaveAttribute("data-sheets", "3");
+  await del.click();
+  await del.click();
+  await expect(page.locator("#sheets")).toHaveAttribute("data-sheets", "0");
+  await expect(page.locator(".sheet-ctl")).toBeHidden();
+  await expect(page.locator("#chatPdf")).toBeHidden();
+  await expect(page.locator("#board")).toHaveAttribute("data-strokes", "1");
+  await page.locator("#chatFile").setInputFiles(pdfPath);
+  await expect(page.locator("#sheets")).toHaveAttribute("data-sheets", "3");
+  await expect(page.locator(".sheet-ctl")).toBeVisible();
+});
+
+test("a moved worksheet is where the solution goes beside, and the PDF export follows it", async ({ page }) => {
+  await scenario({ chat: { intent: "solution", message: "ok", solution_lines: ["x = 4"] } });
+  await openWorksheet(page);
+  const grip = page.locator(".sheet-ctl .grip");
+  const g0 = (await grip.boundingBox())!;
+  await page.mouse.move(g0.x + 13, g0.y + 13);
+  await page.mouse.down();
+  await page.mouse.move(g0.x + 13 - 20, g0.y + 13 + 40, { steps: 4 });
+  await page.mouse.up();
+  await say(page, "write the solution");
+  await expect(page.locator("#notes")).toHaveAttribute("data-notes", "1");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#exportPdf").click()]);
+  expect(readFileSync((await download.path())!).toString("latin1")).toContain("/Count 3");
+});

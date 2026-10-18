@@ -18,6 +18,7 @@ export default function Board() {
       <canvas id="glow"></canvas>
       <div id="marks"></div>
       <div id="notectl"></div>
+      <div id="sheetctl"></div>
 
       <div className="toolbar" role="toolbar">
         <div className="seg" title="When should the tutor check your work?">

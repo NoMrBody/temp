@@ -6,6 +6,7 @@ import { createGlow } from "./glow";
 import { createGraph } from "./graph/panel";
 import { createMarks } from "./marks";
 import { createNotesUi } from "./notesui";
+import { createSheetUi } from "./sheetui";
 import { createPages } from "./pages";
 import { createSheets } from "./sheets";
 import { createView } from "./view";
@@ -57,6 +58,7 @@ export function mountBoard(root: HTMLElement): () => void {
   ctx.viewApi = createView(ctx);
   ctx.sheets = createSheets(ctx);
   ctx.notesUi = createNotesUi(ctx);
+  ctx.sheetUi = createSheetUi(ctx);
   ctx.marks = createMarks(ctx);
   ctx.glow = createGlow(ctx);
   ctx.voice = createVoice(ctx);
@@ -262,6 +264,7 @@ export function mountBoard(root: HTMLElement): () => void {
     ctx.glow.stop();
     ctx.marks.removeMarks(() => true);
     ctx.$("notectl").replaceChildren();
+    ctx.$("sheetctl").replaceChildren();
     document.body.classList.remove("eraser", "hand");
     personaEl?.remove();
   };
